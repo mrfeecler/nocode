@@ -6,23 +6,109 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" type="text/css">
   <link rel="stylesheet" href="theme.css" type="text/css">
+  <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" integrity="sha256-qXBd/EfAdjOA2FGrGAG+b3YBn2tn5A6bhz+LSgYD96k=" crossorigin="anonymous"></script>
+  <script type="module"> // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-analytics.js";
+    import {collection,
+      getFirestore,
+      getDocs,
+      addDoc,
+      getDoc,
+      doc,
+      setDoc
+    } from "https://cdnjs.cloudflare.com/ajax/libs/firebase/10.5.2/firebase-firestore.min.js";
+
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+      apiKey: "AIzaSyBiT_WbANpN4ntqRCvuV48EZ4x4lsxO5Wc",
+      authDomain: "boat-51710.firebaseapp.com",
+      projectId: "boat-51710",
+      storageBucket: "boat-51710.appspot.com",
+      messagingSenderId: "1093694730199",
+      appId: "1:1093694730199:web:84e89bac8dfb79eed4a592",
+      measurementId: "G-P535XQYL57"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+
+    const db = getFirestore(app);
+    const usersCollection = collection(db, "users");
+    const infosCollection = collection(db, "infos");
+    const placesCollection = collection(db, "places");
+    const vehicleCollection = collection(db, "vehicle");
+    const formCollection = collection(db, "register-leave-wharf");
+
+    async function checkUser(email, password) {
+      const querySnapshot = await getDocs(usersCollection);
+      console.log(querySnapshot)
+      const docSnapshots = querySnapshot.docs;
+      for (const doc of docSnapshots) {
+        if (doc.get("email") === email && doc.get("password") === password) {
+          return { ...(await doc.data()), id: doc.id };
+        }
+      }
+      return {};
+    };
+    
+    async function getInfo (id) {
+      if (id) {
+        const docRef = doc(db, "infos", id);
+        let form = {};
+        form = await getDoc(docRef);
+        return form.data();
+      }
+    };
+
+    $(document).on('click', '#btn-submit', function(e) {
+      const email = $('#email').val()
+      const password = $('#password').val()
+    	const loginVal = { email: $('#email').val(), password: $('#password').val()};
+      let loggedIn = false
+      console.log(loginVal)
+      let user = {}
+			checkUser(email, password).then((value) => {
+				user = value
+        user.company = "";
+
+        if (user.infos_id) {
+          let getCompany = {}
+          getInfo(user.infos_id).then(info => {
+          	user.company = getCompany.company;
+            loggedIn = true
+						let message = "Email/password chưa đúng xin mời thử lại";            
+            if (loggedIn) {
+                message =
+                  "Bạn đăng nhập thành công xin đợi giây lát để chuyển trang";
+              }
+            alert(message)
+          });
+        }
+      });
+    })
+    $(document).ready(function() {
+    	console.log(111)
+    })
+  </script>
 </head>
 
-<body style="	background-image: url(assets/images/sea-dock.jpeg);	background-position: top left;	background-size: 100%;	background-repeat: repeat;" class="align-items-center justify-content-center flex-row d-flex">
-  <div class="py-5 justify-content-center align-items-center">
+<body class="align-items-center justify-content-center d-flex flex-column body" style="	background-image: url(assets/images/sea-dock.jpeg);	background-position: top left;	background-size: 100%;	background-repeat: repeat;">
+  <div class="py-5 text-center ma-auto" style="	background-size: cover;	background-position: top left;	background-repeat: repeat;">
     <div class="container">
       <div class="row">
-        <div class="col-md-12" style="">
-          <form id="c_form-h" class="justify-content-center align-items-center bg-light" style="">
-            <div class="form-group row"> <label for="inputmailh" class="col-2 col-form-label">Email đăng nhập </label>
-              <div class="col-10">
-                <input type="email" class="form-control" id="inputmailh" placeholder="mail@example.com"> </div>
-            </div>
-            <div class="form-group row"> <label for="inputpasswordh" class="col-2 col-form-label">Password</label>
-              <div class="col-10">
-                <input type="password" class="form-control" id="inputpasswordh" placeholder="Password"> </div>
-            </div>
-            <button type="submit" class="btn btn-primary">Submit</button>
+        <div class="mx-auto col-10 bg-white p-5 col-md-12 rounded" style="">
+          <form id="login-form" action="javascript:void(0);">
+            <div class="form-group d-flex flex-column justify-content-start align-items-start"><label contenteditable="true">Email</label> <input type="email" class="form-control" placeholder="Enter email" id="email"> </div>
+            <div class="form-group mb-3 d-flex flex-column justify-content-start align-items-start"><label>Password<br></label> <input type="password" class="form-control w-100" placeholder="Password" id="password" style="	min-width: 320px;"> <small class="form-text text-muted text-right">
+                <a href="#"> Recover password</a>
+              </small> </div> <button type="submit" class="btn btn-primary" id="btn-submit">Submit</button>
           </form>
         </div>
       </div>

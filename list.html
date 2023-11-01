@@ -18,20 +18,25 @@
     <div class="container">
       <div class="row">
         <div class="col-md-12">
-          <div class="row d-flex flex-row justify-content-between">
-            <h3 class="">Heading 3</h3>
-            <div><a class="btn btn-outline-primary" href="#">Right icon <i class="fa fa-plus fa-fw"></i> </a></div>
+          <div class="mb-5 d-flex align-center title-area">
+            <h2>Danh sách đã đăng ký hành khách vận tải đường thuỷ nội địa</h2>
+            <button type="button" class="btn  btn-primary text-white d-flex ml-auto">
+              <span class="v-btn__content">
+                <i class="mdi-plus mdi v-icon notranslate v-theme--light v-icon--size-default white--text mr-2" aria-hidden="true"></i> 
+                Tạo mới danh sách 
+              </span>
+            </button>
           </div>
-          <div class="row d-flex flex-row justify-content-between">
+          <div class="d-flex flex-row justify-content-between">
             <div class="btn-group">
-              <button type="button" class="btn btn-primary">Split Dropdown</button>
+              <button type="button" class="btn btn-primary">Lọc trạng thái</button>
               <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-expanded="false"></button>
               <div class="dropdown-menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(128px, 38px, 0px); top: 0px; left: 0px; will-change: transform;">
-                <a class="dropdown-item" href="#">Action</a>
-                <a class="dropdown-item" href="#">Another action</a>
-                <a class="dropdown-item" href="#">Something else here</a>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="#">Separated link</a>
+                <a class="dropdown-item" href="#">Đang xử lý</a>
+                <a class="dropdown-item" href="#">Đang yêu cầu</a>
+                <a class="dropdown-item" href="#">Đã thanh toán</a>
+                <a class="dropdown-item" href="#">Đã chấp thuận</a>
+                <a class="dropdown-item" href="#">Đã từ chối</a>
               </div>
             </div>
             <div class="form-group"><input type="text" class="form-control" id="inlineFormInputGroup" placeholder="Search"></div>

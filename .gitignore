@@ -1,6 +1,8 @@
 .DS_Store
 boat-management/node_modules
 boat-management/dist
+dash/node_modules
+dash/dist
 
 # local env files
 .env.local
@@ -20,3 +22,10 @@ boat-management/*.ntvs*
 boat-management/*.njsproj
 boat-management/*.sln
 boat-management/*.sw?
+dash/.idea
+dash/.vscode
+dash/*.suo
+dash/*.ntvs*
+dash/*.njsproj
+dash/*.sln
+dash/*.sw?

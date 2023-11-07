@@ -85,9 +85,11 @@
             loggedIn = true
 						let message = "Email/password chưa đúng xin mời thử lại";            
             if (loggedIn) {
-                message =
+              message =
                   "Bạn đăng nhập thành công xin đợi giây lát để chuyển trang";
-              }
+                  alert(message);
+                  location.pathname = '/default/list.html'
+            }
             alert(message)
           });
         }

@@ -147,7 +147,7 @@
         html += `<td>${form.time_created}</td>`
         html += `<td>${form.captain}</td>`
         html += `<td>${(form.vehicle && form.vehicle['registration-number']) ? form.vehicle['registration-number'] : ''}</td>`
-        html += `<td>${form.vehicle['type']}</td>`
+        html += `<td>${(form.vehicle && form.vehicle['type']) ? form.vehicle['type'] : ''}</td>`
         html += `<td>${form.toStation}</td>`
         html += `<td>${form.fromStation}</td>`
         html += `<td>${form.time}</td>`

@@ -7,10 +7,171 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" type="text/css">
   <link rel="stylesheet" href="https://static.pingendo.com/bootstrap/bootstrap-4.3.1.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vuetify/3.3.23/vuetify.min.css" integrity="sha512-A1d85B4hIlY5/180/3cI17t39wysWQtGACVvaBw0Rl17HvqlQrlWu8ixf+AwXZo/XJSKxcf9YTmkCrK26TyxKA==" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
   <style> td {
       vertical-align: middle!important;
     }
   </style>
+  <script type="module"> 
+    const labelType = [
+      {
+        en: "processing",
+        vi: "Đang xử lý",
+        sorting: 1,
+        backgroundColor: "amber",
+        roleAcess: ['enterprise', 'admin', 'manager', 'accountant']
+      },
+      {
+        en: "requesting",
+        vi: "Đang yêu cầu",
+        sorting: 2,
+        backgroundColor: "blue",
+        roleAcess: ['enterprise', 'admin', 'manager', 'accountant']
+      },
+      {
+        en: "purchased",
+        vi: "Đã thanh toán",
+        sorting: 3,
+        backgroundColor: "blue",
+        roleAcess: ['enterprise', 'admin', 'manager', 'accountant', 'authority']
+      },
+      {
+        en: "accept",
+        vi: "Đã chấp thuận",
+        sorting: 4,
+        backgroundColor: "green",
+        roleAcess: ['enterprise', 'admin', 'manager', 'accountant', 'authority', 'border']
+      },
+      {
+        en: "reject",
+        vi: "Đã từ chối",
+        sorting: 5,
+        backgroundColor: "red",
+        roleAcess: ['enterprise', 'admin', 'manager', 'accountant', 'authority', 'border']
+      },
+    ];
+  
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-analytics.js";
+    import {collection,
+      getFirestore,
+      getDocs,
+      addDoc,
+      getDoc,
+      doc,
+      setDoc
+    } from "https://cdnjs.cloudflare.com/ajax/libs/firebase/10.5.2/firebase-firestore.min.js";
+
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+      apiKey: "AIzaSyBiT_WbANpN4ntqRCvuV48EZ4x4lsxO5Wc",
+      authDomain: "boat-51710.firebaseapp.com",
+      projectId: "boat-51710",
+      storageBucket: "boat-51710.appspot.com",
+      messagingSenderId: "1093694730199",
+      appId: "1:1093694730199:web:84e89bac8dfb79eed4a592",
+      measurementId: "G-P535XQYL57"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+
+    const db = getFirestore(app);
+    const usersCollection = collection(db, "users");
+    const infosCollection = collection(db, "infos");
+    const placesCollection = collection(db, "places");
+    const vehicleCollection = collection(db, "vehicle");
+    const formCollection = collection(db, "register-leave-wharf");
+
+    async function getBussinessDataDocs() {
+      const querySnapshot = await getDocs(formCollection);
+      const list = [];
+      for (const doc of querySnapshot.docs) {
+        list.push({ ...doc.data(), id: doc.id });
+      }
+      return list ?? [];
+    };
+
+    async function getVehicle(id) {
+      if (id) {
+        const docRef = doc(db, "vehicle", id);
+        let vehicle = {};
+        vehicle = await getDoc(docRef);
+        return vehicle.data();
+      }
+    };
+
+    async function getBussinessData() {
+      let getDatas = await getBussinessDataDocs();
+      const forms = [];
+      const idVehicles = [];
+      const vehicles = [];
+      for (const form of getDatas) {
+        let vehicle = {};
+        if (!idVehicles.includes(form["idVehicle"])) {
+          idVehicles.push(form["idVehicle"]);
+          const getDataVehicle = await getVehicle(form["idVehicle"]);
+          form['vehicle'] = getDataVehicle
+          vehicle = { ...getDataVehicle, idVehicle: form["idVehicle"] };
+          vehicles.push(vehicle);
+        } else {
+          vehicle = vehicles.find(
+            (vehicle) => vehicle["idVehicle"] === form["idVehicle"]
+          );
+        }
+        form["typeConvert"] = labelType.find(
+          (label) => label.en === form.type
+        )?.vi;
+        form["backgroundColor"] = labelType.find(
+          (label) => label.en === form.type
+        )?.backgroundColor;
+
+        form["sorting"] = labelType.find(
+          (label) => label.en === form.type
+        )?.sorting;
+        form["time_created"] = moment(
+          form.created_at,
+          "DD/MM/YYYY HH:mm"
+        ).format("DD/MM/YYYY HH:mm");
+        form["sortTime"] = moment(form.created_at, "DD/MM/YYYY");
+        forms.push({ ...(form), vehicle });
+        console.log(form)
+        let html = `<tr>`
+        html += `<td>${form.typeConvert ?? ""}</td>`
+        html += `<td>${form.time_created}</td>`
+        html += `<td>${form.captain}</td>`
+        html += `<td>${(form.vehicle && form.vehicle['registration-number']) ? form.vehicle['registration-number'] : ''}</td>`
+        html += `<td>${form.vehicle['type']}</td>`
+        html += `<td>${form.toStation}</td>`
+        html += `<td>${form.fromStation}</td>`
+        html += `<td>${form.time}</td>`
+        html += `<td>${form.company}</td>`
+        html += `<td><button>Xem trước</button></td>`
+        html += `</tr>`
+        $('#table-primary tbody').append(html)
+      }
+
+    };
+    
+    async function getInfo (id) {
+      if (id) {
+        const docRef = doc(db, "infos", id);
+        let form = {};
+        form = await getDoc(docRef);
+        return form.data();
+      }
+    };
+
+    $(document).ready(function() {
+    	getBussinessData()
+    })
+  </script>
 </head>
 
 <body>
@@ -53,7 +214,7 @@
             <li class="page-item"> <a class="page-link" href="#">4</a> </li>
             <li class="page-item"> <a class="page-link" href="#">Next</a> </li>
           </ul>
-          <div class="table-responsive my-5">
+          <div class="table-responsive my-5" id="table-primary">
             <table class="table">
               <thead>
                 <tr>

@@ -1,165 +1,175 @@
 <template>
-  <v-alert
-    v-model="alert"
-    close-text="Close Alert"
-    class="alert-forgot"
-    :color="alertColor"
-    dark
-    dismissible
-  >
-    <div class="d-flex align-center">
-      <span>
-        {{ messageAlert }}
-      </span>
-    </div>
-  </v-alert>
-  <div class="data-container">
-    <div class="mb-5 d-flex align-center title-area">
-      <h2>Danh sách đã đăng ký hành khách vận tải đường thuỷ nội địa</h2>
+  <div>
+    <v-alert
+      v-model="alert"
+      close-text="Close Alert"
+      class="alert-forgot"
+      :color="alertColor"
+      dark
+      dismissible
+    >
+      <div class="d-flex align-center">
+        <span>
+          {{ messageAlert }}
+        </span>
+      </div>
+    </v-alert>
+    <div class="data-container">
+      <div class="mb-5 d-flex align-center title-area">
+        <h2>Danh sách đã đăng ký hành khách vận tải đường thuỷ nội địa</h2>
 
-      <v-btn
-        class="ml-auto"
-        color="green"
-        size="large"
-        variant="tonal"
-        @click="createForm"
-        v-if="isShowAddForm"
-      >
-        <v-icon class="white--text mr-2">mdi-plus</v-icon>
-        Tạo mới danh sách
-      </v-btn>
-    </div>
-
-    <div class="d-flex action-form" style="justify-content: space-between">
-      <v-combobox
-        v-model="filterType"
-        :items="labelType"
-        item-value="en"
-        item-title="vi"
-        label="Lọc trạng thái"
-        multiple
-        chips
-        variant="outlined"
-        class="filter-box"
-      />
-      <v-text-field
-        v-model="search"
-        prepend-inner-icon="mdi-magnify"
-        placeholder="Tìm kiếm thuyền trưởng, số đăng ký, phương tiện,…"
-        variant="outlined"
-        hide-details
-        class="search-box"
-      />
-    </div>
-
-    <v-table class="min-width-table mt-3">
-      <thead>
-        <tr>
-          <th class="text-left" style="cursor: pointer">
-            <span style="display: inline-block"> Trạng thái </span>
-          </th>
-          <th class="text-left" style="cursor: pointer">
-            <span style="display: inline-block"> Thời gian tạo </span>
-          </th>
-          <th class="text-left">Thuyền trưởng</th>
-          <th class="text-left">Số đăng ký</th>
-          <th class="text-left">Phương tiện</th>
-          <th class="text-left">Bến rời</th>
-          <th class="text-left">Bến đến</th>
-          <th class="text-left">Thời gian rời bến</th>
-          <th class="text-left" colspan="2">Công ty</th>
-        </tr>
-      </thead>
-      <tbody v-if="showListBussinessData.length > 0 && isReload">
-        <tr
-          v-for="(item, index) in showListBussinessData"
-          :key="item.created_at + index"
-          @click="gotoDetail(item.id)"
-          style="cursor: pointer"
+        <v-btn
+          class="ml-auto"
+          color="green"
+          size="large"
+          variant="tonal"
+          @click="createForm"
+          v-if="isShowAddForm"
         >
-          <td>
-            <v-btn
-              :color="item.backgroundColor"
-              class="text-none text-subtitle-1 color-black"
-              variant="tonal"
-              width="130px"
-            >
-              {{ item.typeConvert ?? "" }}
-            </v-btn>
-          </td>
-          <td>{{ item.time_created }}</td>
-          <td>{{ item.captain }}</td>
-          <td><div v-html="item.vehicle['registration-number'] ?? ''" /></td>
-          <td><div v-html="item.vehicle['type'] ?? ''" /></td>
-          <td>{{ item.toStation }}</td>
-          <td>{{ item.fromStation }}</td>
-          <td>{{ item.time }}</td>
-          <td>{{ item.company ?? "" }}</td>
-          <td>
-            <div class="d-flex">
+          <v-icon class="white--text mr-2">mdi-plus</v-icon>
+          Tạo mới danh sách
+        </v-btn>
+      </div>
+
+      <div class="d-flex action-form" style="justify-content: space-between">
+        <v-combobox
+          v-model="filterType"
+          :items="labelType"
+          item-value="en"
+          item-title="vi"
+          label="Lọc trạng thái"
+          multiple
+          chips
+          variant="outlined"
+          class="filter-box"
+        />
+        <v-text-field
+          v-model="search"
+          prepend-inner-icon="mdi-magnify"
+          placeholder="Tìm kiếm thuyền trưởng, số đăng ký, phương tiện,…"
+          variant="outlined"
+          hide-details
+          class="search-box"
+        />
+      </div>
+
+      <v-table class="min-width-table mt-3">
+        <thead>
+          <tr>
+            <th class="text-left" style="cursor: pointer">
+              <span style="display: inline-block"> Trạng thái </span>
+            </th>
+            <th class="text-left" style="cursor: pointer">
+              <span style="display: inline-block"> Thời gian tạo </span>
+            </th>
+            <th class="text-left">Thuyền trưởng</th>
+            <th class="text-left">Số đăng ký</th>
+            <th class="text-left">Phương tiện</th>
+            <th class="text-left">Bến rời</th>
+            <th class="text-left">Bến đến</th>
+            <th class="text-left">Thời gian rời bến</th>
+            <th class="text-left" colspan="2">Công ty</th>
+          </tr>
+        </thead>
+        <tbody v-if="showListBussinessData.length > 0 && isReload">
+          <tr
+            v-for="(item, index) in showListBussinessData"
+            :key="item.created_at + index"
+            @click="gotoDetail(item.id)"
+            style="cursor: pointer"
+          >
+            <td>
               <v-btn
-                @click.stop="onGenPDF(item.id)"
-                class="pa-0"
-                style="min-width: 36px; background-color: #11ba06; color: white"
+                :color="item.backgroundColor"
+                class="text-none text-subtitle-1 color-black"
+                variant="tonal"
+                width="130px"
               >
-                <v-icon icon="mdi-eye-outline" /><v-tooltip
-                  activator="parent"
-                  location="end"
-                  >Xem trước</v-tooltip
-                ></v-btn
-              >
-              <v-btn
-                v-if="
-                  item.type !== 'accept' &&
-                  item.type !== 'reject' &&
-                  !isShowAddForm
-                "
-                @click.stop="gotoDetail(item.id)"
-                class="ml-3"
-                style="min-width: 36px; background-color: #11ba06; color: white"
-              >
-                Xử lý
+                {{ item.typeConvert ?? "" }}
               </v-btn>
-              <v-btn
-                v-if="
-                  item.type !== 'accept' &&
-                  item.type !== 'reject' &&
-                  !isShowAddForm
-                "
-                @click.stop="rejectForm(item.id)"
-                class="ml-3"
-                color="error"
-                variant="elevated"
-                style="min-width: 36px"
-              >
-                Từ chối
-              </v-btn>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </v-table>
-    <div class="text-center" v-if="pages > 1">
-      <v-pagination v-model="page" :length="pages"></v-pagination>
+            </td>
+            <td>{{ item.time_created }}</td>
+            <td>{{ item.captain }}</td>
+            <td><div v-html="item.vehicle['registration-number'] ?? ''" /></td>
+            <td><div v-html="item.vehicle['type'] ?? ''" /></td>
+            <td>{{ item.toStation }}</td>
+            <td>{{ item.fromStation }}</td>
+            <td>{{ item.time }}</td>
+            <td>{{ item.company ?? "" }}</td>
+            <td>
+              <div class="d-flex">
+                <v-btn
+                  @click.stop="onGenPDF(item.id)"
+                  class="pa-0"
+                  style="
+                    min-width: 36px;
+                    background-color: #11ba06;
+                    color: white;
+                  "
+                >
+                  <v-icon icon="mdi-eye-outline" /><v-tooltip
+                    activator="parent"
+                    location="end"
+                    >Xem trước</v-tooltip
+                  ></v-btn
+                >
+                <v-btn
+                  v-if="
+                    item.type !== 'accept' &&
+                    item.type !== 'reject' &&
+                    !isShowAddForm
+                  "
+                  @click.stop="gotoDetail(item.id)"
+                  class="ml-3"
+                  style="
+                    min-width: 36px;
+                    background-color: #11ba06;
+                    color: white;
+                  "
+                >
+                  Xử lý
+                </v-btn>
+                <v-btn
+                  v-if="
+                    item.type !== 'accept' &&
+                    item.type !== 'reject' &&
+                    !isShowAddForm
+                  "
+                  @click.stop="rejectForm(item.id)"
+                  class="ml-3"
+                  color="error"
+                  variant="elevated"
+                  style="min-width: 36px"
+                >
+                  Từ chối
+                </v-btn>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </v-table>
+      <div class="text-center" v-if="pages > 1">
+        <v-pagination v-model="page" :length="pages"></v-pagination>
+      </div>
     </div>
+    <v-dialog v-model="open" width="auto" persistent>
+      <div v-if="isShowAddForm" style="overflow-y: scroll; background: white">
+        <form-add
+          @closePopup="closePopup"
+          @resetPopup="resetPopup"
+          v-if="currentId === ''"
+        />
+        <form-detail @closePopup="closePopup" :currentId="currentId" v-else />
+      </div>
+      <div v-else style="overflow-y: scroll; background: white">
+        <form-detail
+          @closePopup="closePopup"
+          :currentId="currentId"
+          @resetPopup="resetPopup"
+        />
+      </div>
+    </v-dialog>
   </div>
-  <v-dialog v-model="open" width="auto" persistent>
-    <div v-if="isShowAddForm" style="overflow-y: scroll; background: white">
-      <form-add
-        @closePopup="closePopup"
-        @resetPopup="resetPopup"
-        v-if="currentId === ''"
-      />
-      <form-detail @closePopup="closePopup" :currentId="currentId" v-else />
-    </div>
-    <div v-else style="overflow-y: scroll; background: white">
-      <form-detail
-        @closePopup="closePopup"
-        :currentId="currentId"
-        @resetPopup="resetPopup"
-      />
-    </div>
-  </v-dialog>
 </template>
 
 <script lang="ts">

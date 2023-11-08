@@ -8,9 +8,12 @@
   <link rel="stylesheet" href="https://static.pingendo.com/bootstrap/bootstrap-4.3.1.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vuetify/3.3.23/vuetify.min.css" integrity="sha512-A1d85B4hIlY5/180/3cI17t39wysWQtGACVvaBw0Rl17HvqlQrlWu8ixf+AwXZo/XJSKxcf9YTmkCrK26TyxKA==" crossorigin="anonymous" referrerpolicy="no-referrer">
   <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
-  <style> td {
+  <style>
+    td {
       vertical-align: middle!important;
     }
+    .pagination .page-item {cursor: pointer;}
+    .pagination .page-item.text-muted {cursor: auto;}
   </style>
   <script type="module"> 
     const labelType = [
@@ -50,7 +53,12 @@
         roleAcess: ['enterprise', 'admin', 'manager', 'accountant', 'authority', 'border']
       },
     ];
-  
+      
+    let currentPaging = 1;
+    const size = 20;
+    let pages = 1;
+    var forms = [];
+
     // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-analytics.js";
@@ -109,9 +117,18 @@
 
     async function getBussinessData() {
       let getDatas = await getBussinessDataDocs();
-      const forms = [];
       const idVehicles = [];
       const vehicles = [];
+      pages = Math.ceil(getDatas.length / size)
+      $('.pagination').html('')
+      $('.pagination').append('<li class="page-item page-link prev text-muted">Prev</li>')
+      $('.pagination').each(function(index, el) {
+        Array(pages).fill(0).map((_, i) => i).forEach(e => {
+          $(el).append(`<li class="page-item page-link page">${e + 1} </li>`);
+        })
+      }); 
+      $('.pagination').append('<li class="page-item page-link next">Next </li>')
+      $('#table-primary tbody').html('')
       for (const form of getDatas) {
         let vehicle = {};
         if (!idVehicles.includes(form["idVehicle"])) {
@@ -141,22 +158,22 @@
         ).format("DD/MM/YYYY HH:mm");
         form["sortTime"] = moment(form.created_at, "DD/MM/YYYY");
         forms.push({ ...(form), vehicle });
-        console.log(form)
-        let html = `<tr>`
-        html += `<td>${form.typeConvert ?? ""}</td>`
-        html += `<td>${form.time_created}</td>`
-        html += `<td>${form.captain}</td>`
-        html += `<td>${(form.vehicle && form.vehicle['registration-number']) ? form.vehicle['registration-number'] : ''}</td>`
-        html += `<td>${(form.vehicle && form.vehicle['type']) ? form.vehicle['type'] : ''}</td>`
-        html += `<td>${form.toStation}</td>`
-        html += `<td>${form.fromStation}</td>`
-        html += `<td>${form.time}</td>`
-        html += `<td>${form.company}</td>`
-        html += `<td><button>Xem trước</button></td>`
-        html += `</tr>`
-        $('#table-primary tbody').append(html)
+        if ($('#table-primary tbody tr').length < size) {
+          let html = `<tr>`
+          html += `<td>${form.typeConvert ?? ""}</td>`
+          html += `<td>${form.time_created}</td>`
+          html += `<td>${form.captain}</td>`
+          html += `<td>${(form.vehicle && form.vehicle['registration-number']) ? form.vehicle['registration-number'] : ''}</td>`
+          html += `<td>${(form.vehicle && form.vehicle['type']) ? form.vehicle['type'] : ''}</td>`
+          html += `<td>${form.toStation}</td>`
+          html += `<td>${form.fromStation}</td>`
+          html += `<td>${form.time}</td>`
+          html += `<td>${form.company}</td>`
+          html += `<td><button>Xem trước</button></td>`
+          html += `</tr>`
+          $('#table-primary tbody').append(html)  
+        }
       }
-
     };
     
     async function getInfo (id) {
@@ -168,6 +185,112 @@
       }
     };
 
+    $(document).on('click', '.pagination .page-item.page', function(e) {
+      const nextPage = parseInt($(this).text())
+      if (nextPage === 1) {
+        $('.pagination .page-item.prev').addClass('text-muted')
+      } else {
+        $('.pagination .page-item.prev').removeClass('text-muted')
+      }
+      if (nextPage !== pages) {
+        $('.pagination .page-item.next').removeClass('text-muted')
+      } else {
+        $('.pagination .page-item.next').addClass('text-muted')
+      }
+      if (currentPaging !== nextPage) {
+        const pageIndex = forms.slice((nextPage - 1) * size, nextPage * size)
+        $('#table-primary tbody').html('')
+        pageIndex.forEach(form => {
+          if ($('#table-primary tbody tr').length < size) {
+            let html = `<tr>`
+            html += `<td>${form.typeConvert ?? ""}</td>`
+            html += `<td>${form.time_created}</td>`
+            html += `<td>${form.captain}</td>`
+            html += `<td>${(form.vehicle && form.vehicle['registration-number']) ? form.vehicle['registration-number'] : ''}</td>`
+            html += `<td>${(form.vehicle && form.vehicle['type']) ? form.vehicle['type'] : ''}</td>`
+            html += `<td>${form.toStation}</td>`
+            html += `<td>${form.fromStation}</td>`
+            html += `<td>${form.time}</td>`
+            html += `<td>${form.company}</td>`
+            html += `<td><button>Xem trước</button></td>`
+            html += `</tr>`
+            $('#table-primary tbody').append(html)  
+          }
+        })
+        currentPaging = nextPage
+
+      }
+    })
+    $(document).on('click', '.pagination .page-item.prev', function(e) {
+      if (currentPaging !== 1) {
+        const nextPage = currentPaging - 1
+        const pageIndex = forms.slice((nextPage - 1) * size, nextPage * size)
+        $('#table-primary tbody').html('')
+        pageIndex.forEach(form => {
+          if ($('#table-primary tbody tr').length < size) {
+            let html = `<tr>`
+            html += `<td>${form.typeConvert ?? ""}</td>`
+            html += `<td>${form.time_created}</td>`
+            html += `<td>${form.captain}</td>`
+            html += `<td>${(form.vehicle && form.vehicle['registration-number']) ? form.vehicle['registration-number'] : ''}</td>`
+            html += `<td>${(form.vehicle && form.vehicle['type']) ? form.vehicle['type'] : ''}</td>`
+            html += `<td>${form.toStation}</td>`
+            html += `<td>${form.fromStation}</td>`
+            html += `<td>${form.time}</td>`
+            html += `<td>${form.company}</td>`
+            html += `<td><button>Xem trước</button></td>`
+            html += `</tr>`
+            $('#table-primary tbody').append(html)  
+          }
+        })
+        currentPaging = nextPage
+      }
+      if (currentPaging !== 1) {
+        $('.pagination .page-item.prev').removeClass('text-muted')
+      } else {
+        $('.pagination .page-item.prev').addClass('text-muted')
+      }
+      if (currentPaging !== pages) {
+        $('.pagination .page-item.next').removeClass('text-muted')
+      } else {
+        $('.pagination .page-item.next').addClass('text-muted')
+      }
+    })
+    $(document).on('click', '.pagination .page-item.next', function(e) {
+      if (currentPaging !== pages) {
+        const nextPage = currentPaging + 1
+        const pageIndex = forms.slice((nextPage - 1) * size, nextPage * size)
+        $('#table-primary tbody').html('')
+        pageIndex.forEach(form => {
+          if ($('#table-primary tbody tr').length < size) {
+            let html = `<tr>`
+            html += `<td>${form.typeConvert ?? ""}</td>`
+            html += `<td>${form.time_created}</td>`
+            html += `<td>${form.captain}</td>`
+            html += `<td>${(form.vehicle && form.vehicle['registration-number']) ? form.vehicle['registration-number'] : ''}</td>`
+            html += `<td>${(form.vehicle && form.vehicle['type']) ? form.vehicle['type'] : ''}</td>`
+            html += `<td>${form.toStation}</td>`
+            html += `<td>${form.fromStation}</td>`
+            html += `<td>${form.time}</td>`
+            html += `<td>${form.company}</td>`
+            html += `<td><button>Xem trước</button></td>`
+            html += `</tr>`
+            $('#table-primary tbody').append(html)  
+          }
+        })
+        currentPaging = nextPage
+      }
+      if (currentPaging !== 1) {
+        $('.pagination .page-item.prev').removeClass('text-muted')
+      } else {
+        $('.pagination .page-item.prev').addClass('text-muted')
+      }
+      if (currentPaging !== pages) {
+        $('.pagination .page-item.next').removeClass('text-muted')
+      } else {
+        $('.pagination .page-item.next').addClass('text-muted')
+      }
+    })
     $(document).ready(function() {
     	getBussinessData()
     })
@@ -207,12 +330,12 @@
       <div class="row">
         <div class="col-md-12 mt-5">
           <ul class="pagination d-flex justify-content-center mb-5">
-            <li class="page-item"> <a class="page-link" href="#">Prev</a> </li>
-            <li class="page-item"> <a class="page-link" href="#">1</a> </li>
-            <li class="page-item"> <a class="page-link" href="#">2</a> </li>
-            <li class="page-item active"> <a class="page-link" href="#">3</a> </li>
-            <li class="page-item"> <a class="page-link" href="#">4</a> </li>
-            <li class="page-item"> <a class="page-link" href="#">Next</a> </li>
+            <li class="page-item page-link prev text-muted">Prev</li>
+            <li class="page-item page-link active page">1</li>
+            <li class="page-item page-link page">2</li>
+            <li class="page-item page-link page">3</li>
+            <li class="page-item page-link page">4</li>
+            <li class="page-item page-link next">Next</li>
           </ul>
           <div class="table-responsive my-5" id="table-primary">
             <table class="table">
@@ -247,12 +370,12 @@
             </table>
           </div>
           <ul class="pagination d-flex align-items-center justify-content-center">
-            <li class="page-item"> <a class="page-link" href="#">Prev</a> </li>
-            <li class="page-item"> <a class="page-link" href="#">1</a> </li>
-            <li class="page-item"> <a class="page-link" href="#">2</a> </li>
-            <li class="page-item active"> <a class="page-link" href="#">3</a> </li>
-            <li class="page-item"> <a class="page-link" href="#">4</a> </li>
-            <li class="page-item"> <a class="page-link" href="#">Next</a> </li>
+            <li class="page-item page-link prev text-muted">Prev</li>
+            <li class="page-item page-link active page">1</li>
+            <li class="page-item page-link page">2</li>
+            <li class="page-item page-link page">3</li>
+            <li class="page-item page-link page">4</li>
+            <li class="page-item page-link next">Next</li>
           </ul>
         </div>
       </div>

@@ -8,15 +8,24 @@
   <link rel="stylesheet" href="https://static.pingendo.com/bootstrap/bootstrap-4.3.1.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vuetify/3.3.23/vuetify.min.css" integrity="sha512-A1d85B4hIlY5/180/3cI17t39wysWQtGACVvaBw0Rl17HvqlQrlWu8ixf+AwXZo/XJSKxcf9YTmkCrK26TyxKA==" crossorigin="anonymous" referrerpolicy="no-referrer">
   <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
-  <style>
-    td {
+  <style> td {
       vertical-align: middle!important;
     }
     .pagination .page-item {cursor: pointer;}
     .pagination .page-item.text-muted {cursor: auto;}
+    .overlay {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      background-color: rgba(0,0,0,0.5);
+      justify-content: center;
+      display: flex;
+      align-items: center;
+    }
   </style>
-  <script type="module"> 
-    const labelType = [
+  <script type="module"> const labelType = [
       {
         en: "processing",
         vi: "Đang xử lý",
@@ -58,6 +67,7 @@
     const size = 20;
     let pages = 1;
     var forms = [];
+    let searchVal = ''
 
     // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
@@ -119,16 +129,8 @@
       let getDatas = await getBussinessDataDocs();
       const idVehicles = [];
       const vehicles = [];
-      pages = Math.ceil(getDatas.length / size)
-      $('.pagination').html('')
-      $('.pagination').append('<li class="page-item page-link prev text-muted">Prev</li>')
-      $('.pagination').each(function(index, el) {
-        Array(pages).fill(0).map((_, i) => i).forEach(e => {
-          $(el).append(`<li class="page-item page-link page">${e + 1} </li>`);
-        })
-      }); 
-      $('.pagination').append('<li class="page-item page-link next">Next </li>')
-      $('#table-primary tbody').html('')
+      
+      
       for (const form of getDatas) {
         let vehicle = {};
         if (!idVehicles.includes(form["idVehicle"])) {
@@ -158,6 +160,22 @@
         ).format("DD/MM/YYYY HH:mm");
         form["sortTime"] = moment(form.created_at, "DD/MM/YYYY");
         forms.push({ ...(form), vehicle });
+      }
+      handlePagination(forms);
+    };
+
+    function handlePagination(forms) {
+      pages = Math.ceil(forms.length / size)
+      $('.pagination').html('')
+      $('.pagination').append('<li class="page-item page-link prev text-muted">Prev</li>')
+      $('.pagination').each(function(index, el) {
+        Array(pages).fill(0).map((_, i) => i).forEach(e => {
+          $(el).append(`<li class="page-item page-link page">${e + 1} </li>`);
+        })
+      }); 
+      $('.pagination').append('<li class="page-item page-link next">Next </li>')
+      $('#table-primary tbody').html('')
+      forms.forEach(form => {
         if ($('#table-primary tbody tr').length < size) {
           let html = `<tr>`
           html += `<td>${form.typeConvert ?? ""}</td>`
@@ -173,8 +191,9 @@
           html += `</tr>`
           $('#table-primary tbody').append(html)  
         }
-      }
-    };
+      })
+      $('.overlay').hide();
+    }
     
     async function getInfo (id) {
       if (id) {
@@ -184,6 +203,18 @@
         return form.data();
       }
     };
+    $(document).on('change paste keyup', '#inlineFormInputGroup', function(e) {
+      const value = $(this).val()
+      searchVal = value
+      const returnSearched = [...forms].filter((obj) =>
+        Object.values(obj).some((val) => {
+          return JSON.stringify(val)
+            .toLowerCase()
+            .includes(value.toString().toLowerCase());
+        })
+      );
+      handlePagination(returnSearched)
+    });
 
     $(document).on('click', '.pagination .page-item.page', function(e) {
       const nextPage = parseInt($(this).text())
@@ -197,8 +228,18 @@
       } else {
         $('.pagination .page-item.next').addClass('text-muted')
       }
+      let returnSearched = [...forms]
+      if (searchVal) {
+        returnSearched = [...forms].filter((obj) =>
+          Object.values(obj).some((val) => {
+            return JSON.stringify(val)
+              .toLowerCase()
+              .includes(searchVal.toString().toLowerCase());
+          })
+        );
+      }
       if (currentPaging !== nextPage) {
-        const pageIndex = forms.slice((nextPage - 1) * size, nextPage * size)
+        const pageIndex = returnSearched.slice((nextPage - 1) * size, nextPage * size)
         $('#table-primary tbody').html('')
         pageIndex.forEach(form => {
           if ($('#table-primary tbody tr').length < size) {
@@ -222,9 +263,19 @@
       }
     })
     $(document).on('click', '.pagination .page-item.prev', function(e) {
+      let returnSearched = [...forms]
+      if (searchVal) {
+        returnSearched = [...forms].filter((obj) =>
+          Object.values(obj).some((val) => {
+            return JSON.stringify(val)
+              .toLowerCase()
+              .includes(searchVal.toString().toLowerCase());
+          })
+        );
+      }
       if (currentPaging !== 1) {
         const nextPage = currentPaging - 1
-        const pageIndex = forms.slice((nextPage - 1) * size, nextPage * size)
+        const pageIndex = returnSearched.slice((nextPage - 1) * size, nextPage * size)
         $('#table-primary tbody').html('')
         pageIndex.forEach(form => {
           if ($('#table-primary tbody tr').length < size) {
@@ -257,9 +308,19 @@
       }
     })
     $(document).on('click', '.pagination .page-item.next', function(e) {
+      let returnSearched = [...forms]
+      if (searchVal) {
+        returnSearched = [...forms].filter((obj) =>
+          Object.values(obj).some((val) => {
+            return JSON.stringify(val)
+              .toLowerCase()
+              .includes(searchVal.toString().toLowerCase());
+          })
+        );
+      }
       if (currentPaging !== pages) {
         const nextPage = currentPaging + 1
-        const pageIndex = forms.slice((nextPage - 1) * size, nextPage * size)
+        const pageIndex = returnSearched.slice((nextPage - 1) * size, nextPage * size)
         $('#table-primary tbody').html('')
         pageIndex.forEach(form => {
           if ($('#table-primary tbody tr').length < size) {
@@ -306,9 +367,7 @@
             <h2>Danh sách đã đăng ký hành khách vận tải đường thuỷ nội địa</h2>
             <button type="button" class="btn  btn-primary text-white d-flex ml-auto">
               <span class="v-btn__content">
-                <i class="mdi-plus mdi v-icon notranslate v-theme--light v-icon--size-default white--text mr-2" aria-hidden="true"></i> 
-                Tạo mới danh sách 
-              </span>
+                <i class="mdi-plus mdi v-icon notranslate v-theme--light v-icon--size-default white--text mr-2" aria-hidden="true"></i> Tạo mới danh sách </span>
             </button>
           </div>
           <div class="d-flex flex-row justify-content-between">
@@ -380,6 +439,9 @@
         </div>
       </div>
     </div>
+  </div>
+  <div class="py-5 overlay">
+    <i class="fa fa-cog fa-spin fa-3x fa-fw"></i>
   </div>
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
